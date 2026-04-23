@@ -7,13 +7,13 @@ import io.github.hyscript7.hospoda.stav.StromChovani;
 
 import java.util.Map;
 
-public class ObecnyVyrobceSVlajkouUspenosti<T> extends Stav<T> {
+public class ObecnyVyrobceSVlajkouUspesnosti<T> extends Stav<T> {
     private final Predmet predmetKPriprave;
     private final Map<Predmet, Double> limity;
     private final Sklad sklad;
     private final IVlajkaUspesnosti kontejner;
 
-    public ObecnyVyrobceSVlajkouUspenosti(T herec, StromChovani<T> stromChovani, Predmet predmetKPriprave, Sklad sklad, Map<Predmet, Double> limity, IVlajkaUspesnosti kontejnerVlajky) {
+    public ObecnyVyrobceSVlajkouUspesnosti(T herec, StromChovani<T> stromChovani, Predmet predmetKPriprave, Sklad sklad, Map<Predmet, Double> limity, IVlajkaUspesnosti kontejnerVlajky) {
         super(herec, stromChovani);
         this.predmetKPriprave = predmetKPriprave;
         this.limity = limity;
@@ -23,7 +23,7 @@ public class ObecnyVyrobceSVlajkouUspenosti<T> extends Stav<T> {
 
     @Override
     public void chovani() {
-        if (sklad.getMnozstvy(predmetKPriprave) >= limity.getOrDefault(predmetKPriprave, Double.MAX_VALUE)) {
+        if (sklad.getMnozstvi(predmetKPriprave) >= limity.getOrDefault(predmetKPriprave, Double.MAX_VALUE)) {
             kontejner.nastavUspesnostPosledniAkce(true);
             return;
         }

@@ -12,22 +12,22 @@ public class Sklad {
     }
 
     public synchronized boolean ziskej(Map<Predmet, Double> pozadavky) {
-        for (Map.Entry<Predmet, Double> entry : sklad.entrySet()) {
-            if (sklad.get(entry.getKey()) < entry.getValue()) {
+        for (Map.Entry<Predmet, Double> entry : pozadavky.entrySet()) {
+            if (sklad.getOrDefault(entry.getKey(), 0D) < entry.getValue()) {
                 return false;
             }
         }
-        for (Map.Entry<Predmet, Double> entry : sklad.entrySet()) {
-            sklad.put(entry.getKey(), sklad.get(entry.getKey()) - entry.getValue());
+        for (Map.Entry<Predmet, Double> entry : pozadavky.entrySet()) {
+            sklad.merge(entry.getKey(), -entry.getValue(), Double::sum);
         }
         return true;
     }
 
-    public synchronized void uloz(Predmet predmet, double amount) {
-        sklad.put(predmet, sklad.get(predmet) + amount);
+    public synchronized void uloz(Predmet predmet, double mnozstvi) {
+        sklad.merge(predmet, mnozstvi, Double::sum);
     }
 
-    public synchronized double getMnozstvy(Predmet predmet) {
-        return sklad.get(predmet);
+    public synchronized double getMnozstvi(Predmet predmet) {
+        return sklad.getOrDefault(predmet, 0D);
     }
 }

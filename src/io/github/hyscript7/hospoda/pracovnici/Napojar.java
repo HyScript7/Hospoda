@@ -6,7 +6,7 @@ import io.github.hyscript7.hospoda.stav.Stav;
 import io.github.hyscript7.hospoda.stav.StromChovani;
 import io.github.hyscript7.hospoda.stav.univerzalni.CekaniSResetemVlajky;
 import io.github.hyscript7.hospoda.stav.univerzalni.IVlajkaUspesnosti;
-import io.github.hyscript7.hospoda.stav.univerzalni.ObecnyVyrobceSVlajkouUspenosti;
+import io.github.hyscript7.hospoda.stav.univerzalni.ObecnyVyrobceSVlajkouUspesnosti;
 
 import java.time.Duration;
 import java.util.Map;
@@ -35,34 +35,31 @@ public class Napojar extends Thread implements IVlajkaUspesnosti {
 
     private static Predicate<Napojar> vytvorPrechodnik(Predmet a, Predmet b) {
         return napojar -> {
-            double pocetAlpha = napojar.sklad.getMnozstvy(a);
-            double pocetBeta = napojar.sklad.getMnozstvy(b);
-            if (pocetAlpha < napojar.limity.get(a)) {
-                return !(pocetBeta < napojar.limity.get(b)) || !(pocetBeta < pocetAlpha);
-            }
-            return false;
+            double pocetA = napojar.sklad.getMnozstvi(a);
+            double pocetB = napojar.sklad.getMnozstvi(b);
+            double limitA = napojar.limity.get(a);
+            double limitB = napojar.limity.get(b);
+            return pocetA < limitA && (pocetB >= limitB || pocetA <= pocetB);
         };
     }
 
     private StromChovani<Napojar> vytvorStromChovani() {
         StromChovani<Napojar> strom = new StromChovani<>();
 
-        ObecnyVyrobceSVlajkouUspenosti<Napojar> pivo = new ObecnyVyrobceSVlajkouUspenosti<>(this, strom, Predmet.SKLENICE_PIVA, sklad, limity, this);
-        ObecnyVyrobceSVlajkouUspenosti<Napojar> limonada = new ObecnyVyrobceSVlajkouUspenosti<>(this, strom, Predmet.SKLENICE_LIMONADY, sklad, limity, this);
+        ObecnyVyrobceSVlajkouUspesnosti<Napojar> pivo = new ObecnyVyrobceSVlajkouUspesnosti<>(this, strom, Predmet.SKLENICE_PIVA, sklad, limity, this);
+        ObecnyVyrobceSVlajkouUspesnosti<Napojar> limonada = new ObecnyVyrobceSVlajkouUspesnosti<>(this, strom, Predmet.SKLENICE_LIMONADY, sklad, limity, this);
         CekaniSResetemVlajky<Napojar> spanek = new CekaniSResetemVlajky<>(this, strom, Duration.ofSeconds(1), this);
         Stav<Napojar> rozcestnik = new Stav<>(this, strom);
 
-        // Určení akce
-        rozcestnik.pridejPrechod(napojar -> !napojar.posledniAkceUspela(), spanek); // Pokud poslední akce selhala (tedy, pokud došli suroviny)
+        rozcestnik.pridejPrechod(napojar -> !napojar.posledniAkceUspela(), spanek);
         rozcestnik.pridejPrechod(vytvorPrechodnik(Predmet.SKLENICE_PIVA, Predmet.SKLENICE_LIMONADY), pivo);
         rozcestnik.pridejPrechod(vytvorPrechodnik(Predmet.SKLENICE_LIMONADY, Predmet.SKLENICE_PIVA), limonada);
-        rozcestnik.pridejPrechod(_ -> true, spanek); // Žádná z předchozích akcí neproběhla, čiže spinkáme
+        rozcestnik.pridejPrechod(_ -> true, spanek);
 
-        // Nastavení návratu do rozcestníku po vykonání akce stavu
-        Predicate<Napojar> navrat = _ -> true;
-        pivo.pridejPrechod(navrat, rozcestnik);
-        limonada.pridejPrechod(navrat, rozcestnik);
-        spanek.pridejPrechod(navrat, rozcestnik);
+        Predicate<Napojar> vzdy = _ -> true;
+        pivo.pridejPrechod(vzdy, rozcestnik);
+        limonada.pridejPrechod(vzdy, rozcestnik);
+        spanek.pridejPrechod(vzdy, rozcestnik);
 
         strom.zmenStav(rozcestnik);
         return strom;
@@ -74,5 +71,4 @@ public class Napojar extends Thread implements IVlajkaUspesnosti {
             stromChovani.run();
         }
     }
-
 }

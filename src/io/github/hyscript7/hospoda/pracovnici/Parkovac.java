@@ -6,7 +6,7 @@ import io.github.hyscript7.hospoda.stav.Stav;
 import io.github.hyscript7.hospoda.stav.StromChovani;
 import io.github.hyscript7.hospoda.stav.univerzalni.CekaniSResetemVlajky;
 import io.github.hyscript7.hospoda.stav.univerzalni.IVlajkaUspesnosti;
-import io.github.hyscript7.hospoda.stav.univerzalni.ObecnyVyrobceSVlajkouUspenosti;
+import io.github.hyscript7.hospoda.stav.univerzalni.ObecnyVyrobceSVlajkouUspesnosti;
 
 import java.time.Duration;
 import java.util.Map;
@@ -24,23 +24,23 @@ public class Parkovac extends Thread implements IVlajkaUspesnosti {
     }
 
     private StromChovani<Parkovac> vytvorStromChovani() {
-        Predicate<Parkovac> navrat = _ -> true; // Vždy
+        Predicate<Parkovac> vzdy = _ -> true;
         StromChovani<Parkovac> strom = new StromChovani<>();
 
         Stav<Parkovac> rozcestnik = new Stav<>(this, strom);
         CekaniSResetemVlajky<Parkovac> behani = new CekaniSResetemVlajky<>(this, strom, Duration.ofSeconds(6), this);
-        ObecnyVyrobceSVlajkouUspenosti<Parkovac> vyrobParekVRohliku = new ObecnyVyrobceSVlajkouUspenosti<>(this, strom, Predmet.PAREK_V_ROHLIKU, sklad, limity, this);
+        ObecnyVyrobceSVlajkouUspesnosti<Parkovac> vyrobParekVRohliku = new ObecnyVyrobceSVlajkouUspesnosti<>(this, strom, Predmet.PAREK_V_ROHLIKU, sklad, limity, this);
         DoplnZasoby nakup = new DoplnZasoby(this, strom);
         CekaniSResetemVlajky<Parkovac> cekaniPoNakupu = new CekaniSResetemVlajky<>(this, strom, Duration.ofSeconds(5), this);
 
-        rozcestnik.pridejPrechod(_ -> sklad.getMnozstvy(Predmet.PAREK) <= 0 || sklad.getMnozstvy(Predmet.ROHLIK) <= 0, nakup);
-        rozcestnik.pridejPrechod(_ -> sklad.getMnozstvy(Predmet.PAREK_V_ROHLIKU) < limity.get(Predmet.PAREK_V_ROHLIKU), vyrobParekVRohliku);
-        rozcestnik.pridejPrechod(navrat, behani); // Výchozí případ
+        rozcestnik.pridejPrechod(_ -> sklad.getMnozstvi(Predmet.PAREK) <= 0 || sklad.getMnozstvi(Predmet.ROHLIK) <= 0, nakup);
+        rozcestnik.pridejPrechod(_ -> sklad.getMnozstvi(Predmet.PAREK_V_ROHLIKU) < limity.get(Predmet.PAREK_V_ROHLIKU), vyrobParekVRohliku);
+        rozcestnik.pridejPrechod(vzdy, behani);
 
-        behani.pridejPrechod(navrat, rozcestnik);
-        vyrobParekVRohliku.pridejPrechod(navrat, rozcestnik);
-        nakup.pridejPrechod(navrat, cekaniPoNakupu);
-        cekaniPoNakupu.pridejPrechod(navrat, rozcestnik);
+        behani.pridejPrechod(vzdy, rozcestnik);
+        vyrobParekVRohliku.pridejPrechod(vzdy, rozcestnik);
+        nakup.pridejPrechod(vzdy, cekaniPoNakupu);
+        cekaniPoNakupu.pridejPrechod(vzdy, rozcestnik);
 
         strom.zmenStav(rozcestnik);
         return strom;
@@ -48,7 +48,9 @@ public class Parkovac extends Thread implements IVlajkaUspesnosti {
 
     @Override
     public void run() {
-        stromChovani.run();
+        while (!isInterrupted()) {
+            stromChovani.run();
+        }
     }
 
     @Override

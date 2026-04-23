@@ -17,7 +17,7 @@ public class StromChovani<T> {
 
     public void run() {
         if (aktualniStav != null) {
-            aktualniStav.chovani();
+            aktualniStav.run();
         }
     }
 }
